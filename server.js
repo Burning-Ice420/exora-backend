@@ -3,7 +3,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
-
+const cors = require('cors');
 // Import configurations and middleware
 const config = require('./config/environment');
 const connectDB = require('./config/database');
@@ -30,7 +30,7 @@ app.use(securityHeaders);
 app.use(compression());
 
 // CORS
-app.use(require('cors')(corsOptions));
+app.use(cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
