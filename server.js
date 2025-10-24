@@ -43,7 +43,7 @@ if (config.NODE_ENV === 'development') {
 app.use(requestLogger);
 
 // Rate limiting
-app.use('/api/', apiLimiter);
+
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/users/login', authLimiter);
