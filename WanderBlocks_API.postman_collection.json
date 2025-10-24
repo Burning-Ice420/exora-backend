@@ -1,0 +1,969 @@
+{
+  "info": {
+    "name": "WanderBlocks API",
+    "description": "Complete API collection for WanderBlocks backend testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "User Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"bio\": \"Travel enthusiast\",\n  \"interests\": [\"Adventure\", \"Food\", \"Culture\"],\n  \"age\": 28,\n  \"gender\": \"Male\",\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-74.006, 40.7128]\n  },\n  \"isMapPublic\": true,\n  \"travel_type\": \"solo_traveler\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Current User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"bio\": \"Updated bio\",\n  \"interests\": [\"Adventure\", \"Food\", \"Culture\", \"Photography\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Itineraries",
+      "item": [
+        {
+          "name": "Create Itinerary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Amazing Europe Trip\",\n  \"description\": \"A 2-week journey through Europe\",\n  \"totalBudget\": 3000,\n  \"isPublic\": true,\n  \"departureDate\": \"2024-06-01\",\n  \"arrivalDate\": \"2024-06-15\",\n  \"destination\": \"Europe\",\n  \"tags\": [\"Europe\", \"Adventure\", \"Culture\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Itineraries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Itineraries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clone Itinerary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/clone/ITINERARY_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "clone", "ITINERARY_ID_HERE"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Family & Travel Type",
+      "item": [
+        {
+          "name": "Family Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rohit Sharma\",\n  \"email\": \"rohit@gmail.com\",\n  \"password\": \"123456\",\n  \"travel_type\": \"family\",\n  \"family_members\": [\n    {\n      \"name\": \"Neha Sharma\",\n      \"email\": \"neha@gmail.com\",\n      \"relation\": \"wife\"\n    },\n    {\n      \"name\": \"Aarav Sharma\",\n      \"email\": \"aarav@gmail.com\",\n      \"relation\": \"son\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Couple Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Singh\",\n  \"email\": \"priya@gmail.com\",\n  \"password\": \"123456\",\n  \"travel_type\": \"couple\",\n  \"family_members\": [\n    {\n      \"name\": \"Raj Singh\",\n      \"email\": \"raj@gmail.com\",\n      \"relation\": \"husband\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Main Block (Basic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Family Trip to Paris\",\n  \"destination\": \"Paris, France\",\n  \"radius\": 10,\n  \"membersInvolved\": [\"{{userId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Detailed Restaurant Block",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fine Dining at Le Jules Verne\",\n  \"destination\": \"Le Jules Verne, Paris\",\n  \"type\": \"Restaurant\",\n  \"description\": \"Michelin-starred restaurant in the Eiffel Tower with panoramic views\",\n  \"location\": {\n    \"name\": \"Le Jules Verne\",\n    \"address\": \"Avenue Gustave Eiffel, 75007 Paris, France\",\n    \"coordinates\": {\n      \"latitude\": 48.8584,\n      \"longitude\": 2.2945\n    },\n    \"city\": \"Paris\",\n    \"country\": \"France\"\n  },\n  \"timing\": {\n    \"startDate\": \"2024-06-15T19:00:00Z\",\n    \"endDate\": \"2024-06-15T22:00:00Z\",\n    \"startTime\": \"19:00\",\n    \"endTime\": \"22:00\",\n    \"duration\": \"3 hours\",\n    \"timezone\": \"Europe/Paris\"\n  },\n  \"cost\": {\n    \"estimated\": 250,\n    \"currency\": \"EUR\",\n    \"perPerson\": true,\n    \"includes\": [\"dinner\", \"wine pairing\", \"service\"],\n    \"excludes\": [\"transportation\", \"tips\"]\n  },\n  \"capacity\": {\n    \"minPeople\": 2,\n    \"maxPeople\": 8,\n    \"currentBookings\": 0\n  },\n  \"requirements\": {\n    \"ageRestriction\": {\n      \"min\": 12\n    },\n    \"physicalFitness\": \"Easy\",\n    \"documents\": [\"reservation confirmation\"],\n    \"specialNeeds\": [\"wheelchair accessible\"]\n  },\n  \"contact\": {\n    \"phone\": \"+33 1 45 55 61 44\",\n    \"email\": \"contact@lejulesverne-paris.com\",\n    \"website\": \"https://www.lejulesverne-paris.com\",\n    \"bookingUrl\": \"https://www.lejulesverne-paris.com/reservations\"\n  },\n  \"media\": {\n    \"images\": [\n      \"https://example.com/restaurant1.jpg\",\n      \"https://example.com/restaurant2.jpg\"\n    ],\n    \"videos\": [\"https://example.com/restaurant-tour.mp4\"],\n    \"virtualTour\": \"https://example.com/virtual-tour\"\n  },\n  \"ratings\": {\n    \"overall\": 4.8,\n    \"categories\": {\n      \"value\": 4.5,\n      \"service\": 5.0,\n      \"location\": 5.0,\n      \"cleanliness\": 5.0,\n      \"food\": 5.0\n    },\n    \"totalReviews\": 1247\n  },\n  \"tags\": [\"fine-dining\", \"michelin-star\", \"eiffel-tower\", \"romantic\", \"french-cuisine\"],\n  \"categoryDetails\": {\n    \"restaurant\": {\n      \"cuisine\": [\"French\", \"Contemporary\"],\n      \"priceRange\": \"$$$$\",\n      \"dietaryOptions\": [\"vegetarian\", \"vegan\", \"gluten-free\"],\n      \"dressCode\": \"Smart casual\",\n      \"reservations\": {\n        \"required\": true,\n        \"phone\": \"+33 1 45 55 61 44\",\n        \"online\": \"https://www.lejulesverne-paris.com/reservations\"\n      },\n      \"specialties\": [\"Truffle dishes\", \"Wine selection\", \"Dessert menu\"]\n    }\n  },\n  \"membersInvolved\": [\"{{userId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Detailed Activity Block",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Louvre Museum Guided Tour\",\n  \"destination\": \"Louvre Museum, Paris\",\n  \"type\": \"Activity\",\n  \"description\": \"Skip-the-line guided tour of the world's largest art museum\",\n  \"location\": {\n    \"name\": \"Musée du Louvre\",\n    \"address\": \"Rue de Rivoli, 75001 Paris, France\",\n    \"coordinates\": {\n      \"latitude\": 48.8606,\n      \"longitude\": 2.3376\n    },\n    \"city\": \"Paris\",\n    \"country\": \"France\"\n  },\n  \"timing\": {\n    \"startDate\": \"2024-06-16T10:00:00Z\",\n    \"endDate\": \"2024-06-16T13:00:00Z\",\n    \"startTime\": \"10:00\",\n    \"endTime\": \"13:00\",\n    \"duration\": \"3 hours\",\n    \"timezone\": \"Europe/Paris\"\n  },\n  \"cost\": {\n    \"estimated\": 65,\n    \"currency\": \"EUR\",\n    \"perPerson\": true,\n    \"includes\": [\"entrance fee\", \"guide\", \"audio headset\"],\n    \"excludes\": [\"transportation\", \"meals\"]\n  },\n  \"capacity\": {\n    \"minPeople\": 1,\n    \"maxPeople\": 25,\n    \"currentBookings\": 0\n  },\n  \"requirements\": {\n    \"ageRestriction\": {\n      \"min\": 6\n    },\n    \"physicalFitness\": \"Moderate\",\n    \"equipment\": [\"comfortable walking shoes\"],\n    \"documents\": [\"ticket confirmation\", \"ID\"]\n  },\n  \"contact\": {\n    \"phone\": \"+33 1 40 20 50 50\",\n    \"email\": \"info@louvre.fr\",\n    \"website\": \"https://www.louvre.fr\",\n    \"bookingUrl\": \"https://www.louvre.fr/en/visit/plan-your-visit\"\n  },\n  \"media\": {\n    \"images\": [\n      \"https://example.com/louvre1.jpg\",\n      \"https://example.com/louvre2.jpg\"\n    ],\n    \"videos\": [\"https://example.com/louvre-tour.mp4\"]\n  },\n  \"ratings\": {\n    \"overall\": 4.7,\n    \"categories\": {\n      \"value\": 4.5,\n      \"service\": 4.8,\n      \"location\": 5.0,\n      \"cleanliness\": 4.6,\n      \"food\": 0\n    },\n    \"totalReviews\": 8934\n  },\n  \"tags\": [\"museum\", \"art\", \"history\", \"culture\", \"guided-tour\"],\n  \"categoryDetails\": {\n    \"activity\": {\n      \"activityType\": \"Cultural Tour\",\n      \"difficulty\": \"Easy\",\n      \"instructor\": \"Professional Guide\",\n      \"equipment\": [\"audio headset\"],\n      \"groupSize\": {\n        \"min\": 1,\n        \"max\": 25\n      },\n      \"weatherDependent\": false,\n      \"indoor\": true\n    }\n  },\n  \"membersInvolved\": [\"{{userId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Suggest Sub-Block",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentBlockId\": \"PARENT_BLOCK_ID_HERE\",\n  \"destination\": \"Local Cafe\",\n  \"radius\": 2.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/suggest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "suggest"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Sub-Block",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/approve/SUB_BLOCK_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "approve", "SUB_BLOCK_ID_HERE"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Sub-Block",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/approve/SUB_BLOCK_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "approve", "SUB_BLOCK_ID_HERE"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Blocks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/my-blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "my-blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sub-Blocks for Main Block",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/BLOCK_ID_HERE/sub-blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "BLOCK_ID_HERE", "sub-blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Block Details by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/BLOCK_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "BLOCK_ID_HERE"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Blocks",
+      "item": [
+        {
+          "name": "Create Block (Legacy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itineraryId\": \"ITINERARY_ID_HERE\",\n  \"type\": \"Activity\",\n  \"title\": \"Visit Eiffel Tower\",\n  \"description\": \"Iconic landmark in Paris\",\n  \"date\": \"2024-06-05\",\n  \"time\": \"10:00\",\n  \"duration\": \"2 hours\",\n  \"cost\": 25,\n  \"location\": \"Eiffel Tower, Paris\",\n  \"isJoinable\": true,\n  \"tags\": [\"Sightseeing\", \"Landmark\", \"Paris\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Blocks for Itinerary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/itinerary/ITINERARY_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "itinerary", "ITINERARY_ID_HERE"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Block Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/recommend?interests=Adventure,Food&budget=100&location=Paris",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "recommend"],
+              "query": [
+                {
+                  "key": "interests",
+                  "value": "Adventure,Food"
+                },
+                {
+                  "key": "budget",
+                  "value": "100"
+                },
+                {
+                  "key": "location",
+                  "value": "Paris"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Block",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Block Title\",\n  \"description\": \"Updated description\",\n  \"cost\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/BLOCK_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "BLOCK_ID_HERE"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Block",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/BLOCK_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "BLOCK_ID_HERE"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Map & Location",
+      "item": [
+        {
+          "name": "Get Nearby Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/map/nearby?lat=40.7128&lng=-74.006&radius=10&ageMin=20&ageMax=35&gender=Male&interests=Adventure,Food",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "map", "nearby"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "40.7128"
+                },
+                {
+                  "key": "lng",
+                  "value": "-74.006"
+                },
+                {
+                  "key": "radius",
+                  "value": "10"
+                },
+                {
+                  "key": "ageMin",
+                  "value": "20"
+                },
+                {
+                  "key": "ageMax",
+                  "value": "35"
+                },
+                {
+                  "key": "gender",
+                  "value": "Male"
+                },
+                {
+                  "key": "interests",
+                  "value": "Adventure,Food"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feed",
+      "item": [
+        {
+          "name": "Get User Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/feed?userId={{userId}}&lat=40.7128&lng=-74.006&radius=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "lat",
+                  "value": "40.7128"
+                },
+                {
+                  "key": "lng",
+                  "value": "-74.006"
+                },
+                {
+                  "key": "radius",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Feed Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"type\": \"Itinerary\",\n  \"content\": \"Just created an amazing Europe itinerary!\",\n  \"itineraryRef\": \"ITINERARY_ID_HERE\",\n  \"mediaUrl\": \"https://example.com/image.jpg\",\n  \"tags\": [\"Europe\", \"Travel\", \"Adventure\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/feed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Requests",
+      "item": [
+        {
+          "name": "Send Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blockId\": \"BLOCK_ID_HERE\",\n  \"senderId\": \"{{userId}}\",\n  \"receiverId\": \"RECEIVER_USER_ID_HERE\",\n  \"message\": \"Hi! I'd love to join this activity. I'm also interested in adventure and culture.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "send"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Requests (All)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sent Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/user/{{userId}}?type=sent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "user", "{{userId}}"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "sent"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Received Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/user/{{userId}}?type=received",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "user", "{{userId}}"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "received"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Request Status (Accept)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Accepted\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/REQUEST_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "REQUEST_ID_HERE"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Request Status (Reject)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Rejected\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/REQUEST_ID_HERE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "REQUEST_ID_HERE"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Testing",
+      "item": [
+        {
+          "name": "Invalid Login (Wrong Password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Signup (Missing Fields)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unauthorized Access (No Token)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid_token_here"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
