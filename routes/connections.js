@@ -13,4 +13,7 @@ router.post('/:userId/request', verifyToken, catchAsync(connectionController.sen
 // Accept connection request
 router.post('/:connectionId/accept', verifyToken, catchAsync(connectionController.acceptConnectionRequest));
 
+// Reject connection request
+router.post('/:connectionId/reject', verifyToken, catchAsync(connectionController.rejectConnectionRequest));
+
 module.exports = router;

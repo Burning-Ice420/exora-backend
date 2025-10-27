@@ -14,19 +14,9 @@ const createRateLimit = (windowMs, max, message) => {
   });
 };
 
-// General API rate limiting
-const apiLimiter = createRateLimit(
-  config.RATE_LIMIT_WINDOW_MS,
-  config.RATE_LIMIT_MAX_REQUESTS,
-  'Too many requests from this IP, please try again later.'
-);
-
-// Strict rate limiting for auth endpoints
-const authLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  5, // 5 attempts
-  'Too many authentication attempts, please try again later.'
-);
+// Rate limiting disabled for development
+const apiLimiter = (req, res, next) => next();
+const authLimiter = (req, res, next) => next();
 
 // CORS configuration
 const corsOptions = {
@@ -42,6 +32,7 @@ const corsOptions = {
       callback(new Error('Not allowed by CORS'));
     }
   },
+  credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

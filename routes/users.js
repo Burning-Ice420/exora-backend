@@ -29,8 +29,8 @@ router.post('/login', [
 // Get current user profile
 router.get('/me', verifyToken, catchAsync(userController.getCurrentUser));
 
-// Get user by ID
-router.get('/:id', verifyToken, catchAsync(userController.getUserById));
+// Get user by ID (public endpoint for viewing profiles)
+router.get('/:id', catchAsync(userController.getUserById));
 
 // Update current user
 router.put('/me', verifyToken, [

@@ -3,7 +3,7 @@ const compression = require('compression');
 const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
-const cors = require('cors');
+
 // Import configurations and middleware
 const config = require('./config/environment');
 const connectDB = require('./config/database');
@@ -30,7 +30,7 @@ app.use(securityHeaders);
 app.use(compression());
 
 // CORS
-app.use(cors());
+app.use(require('cors')(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -43,7 +43,7 @@ if (config.NODE_ENV === 'development') {
 app.use(requestLogger);
 
 // Rate limiting
-
+app.use('/api/', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/users/login', authLimiter);
@@ -60,6 +60,7 @@ app.use('/api/map', require('./routes/map'));
 app.use('/api/itineraries', require('./routes/itineraries'));
 app.use('/api/blocks', require('./routes/blocks'));
 app.use('/api/requests', require('./routes/requests'));
+app.use('/api/trip-requests', require('./routes/tripRequests'));
 app.use('/api/uploads', require('./routes/uploads'));
 
 // Health check endpoint
