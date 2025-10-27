@@ -7,7 +7,7 @@ const path = require('path');
 // Import configurations and middleware
 const config = require('./config/environment');
 const connectDB = require('./config/database');
-const { apiLimiter, authLimiter, corsOptions, securityHeaders } = require('./middleware/security');
+const { apiLimiter, authLimiter } = require('./middleware/security');
 const { requestLogger, errorLogger } = require('./middleware/logging');
 const { globalErrorHandler, notFound } = require('./middleware/errorHandler');
 
@@ -25,13 +25,11 @@ connectDB();
 // Trust proxy (for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(securityHeaders);
+// Compression middleware
 app.use(compression());
 
-// CORS
-app.use(require('cors')(corsOptions));
-
+// CORS - allow all origins with default settings
+app.use(require('cors')());
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -43,7 +41,6 @@ if (config.NODE_ENV === 'development') {
 app.use(requestLogger);
 
 // Rate limiting
-app.use('/api/', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/users/login', authLimiter);
