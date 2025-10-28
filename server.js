@@ -59,6 +59,7 @@ app.use('/api/blocks', require('./routes/blocks'));
 app.use('/api/requests', require('./routes/requests'));
 app.use('/api/trip-requests', require('./routes/tripRequests'));
 app.use('/api/uploads', require('./routes/uploads'));
+app.use('/api/audio-analysis', require('./routes/audioAnalysis'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

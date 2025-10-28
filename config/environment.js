@@ -32,6 +32,9 @@ const config = {
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 
+  // AI Services
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+
   // Cloudinary
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
