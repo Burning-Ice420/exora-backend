@@ -212,7 +212,7 @@ const analyzeAudioWithGemini = async (audioBuffer, originalFilename, userData) =
     }
     
     // Initialize Gemini 2.5 Flash with audio support
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
     
     // Create the prompt
     const prompt = getAnalysisPrompt(userData);
@@ -371,7 +371,7 @@ const analyzeAudio = async (req, res) => {
     const processingTime = Date.now() - startTime;
     analysisRecord.analysis = createSafeAnalysis(analysis);
     analysisRecord.llmRawResponse = typeof analysis === 'string' ? analysis : '';
-    analysisRecord.llmModel = 'gemini-2.5-flash';
+    analysisRecord.llmModel = 'gemini-2.5-pro';
     analysisRecord.status = 'completed';
     analysisRecord.processingTime = processingTime;
     await analysisRecord.save();
@@ -422,7 +422,7 @@ const healthCheck = async (req, res) => {
 
     // Check Gemini API
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
       await model.generateContent([{ text: "test" }]);
       checks.gemini = true;
     } catch (error) {
@@ -562,7 +562,7 @@ const analyzeProfileText = async (req, res) => {
     });
     await analysisRecord.save();
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
     // Build prompt using provided structured inputs and the new survey questions
     const prompt = `You are an AI travel personality analyzer. There is NO audio. Use the user's structured answers to the survey questions below to infer their travel personality and preferences. Produce the SAME JSON schema as before. Return ONLY valid JSON (no markdown, no prose).
@@ -642,7 +642,7 @@ Output JSON schema (return exactly this shape with concrete values):
     const processingTime = Date.now() - startTime;
     analysisRecord.analysis = createSafeAnalysis(analysis);
     analysisRecord.llmRawResponse = text;
-    analysisRecord.llmModel = 'gemini-2.5-flash';
+    analysisRecord.llmModel = 'gemini-2.5-pro';
     analysisRecord.status = 'completed';
     analysisRecord.processingTime = processingTime;
     await analysisRecord.save();
