@@ -19,6 +19,11 @@ const audioAnalysisSchema = new mongoose.Schema({
     type: String,
     required: true
   }],
+  // Store the full original input payload (audio or text-based)
+  inputPayload: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   analysis: {
     transcription: {
       type: String,
@@ -65,6 +70,15 @@ const audioAnalysisSchema = new mongoose.Schema({
         items: { type: [String], default: [] }
       }]
     }
+  },
+  // Store raw LLM text (pre-JSON-parse) and model info for traceability
+  llmRawResponse: {
+    type: String,
+    default: ''
+  },
+  llmModel: {
+    type: String,
+    default: ''
   },
   status: {
     type: String,

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { upload, analyzeAudio, analyzeAudioWithJSON, healthCheck } = require('../controllers/audioAnalysisController');
+const { upload, analyzeAudio, analyzeAudioWithJSON, analyzeProfileText, healthCheck } = require('../controllers/audioAnalysisController');
 const { validateAudioAnalysisInput, validateAudioFile, audioAnalysisLimiter } = require('../middleware/audioValidation');
 
 // Apply rate limiting to all audio analysis routes
@@ -25,6 +25,9 @@ router.post('/analyze-audio-json',
   analyzeAudioWithJSON
 );
 
+// New: Text-only analysis (no audio). Accepts JSON body and returns same shape
+router.post('/analyze', analyzeProfileText);
+
 // Test endpoint for development
 router.get('/test', (req, res) => {
   res.json({
@@ -33,11 +36,12 @@ router.get('/test', (req, res) => {
     endpoints: {
       'POST /api/audio-analysis/analyze-audio': 'Analyze audio file and return PDF directly',
       'POST /api/audio-analysis/analyze-audio-json': 'Analyze audio file and return JSON with PDF data',
+      'POST /api/audio-analysis/analyze': 'Analyze structured JSON (no audio) and return same JSON format',
       'GET /api/audio-analysis/health': 'Check service health',
       'GET /api/audio-analysis/test': 'Test endpoint'
     },
     requiredFields: {
-      audio: 'Audio file (WebM, MP3, WAV, M4A, OGG) - max 50MB',
+      audio: 'Only for audio endpoints; JSON endpoint requires structured fields',
       name: 'User name (2-100 characters)',
       email: 'Valid email address',
       phone: 'Phone number (10-15 characters)'

@@ -70,6 +70,18 @@ const questions = [
   "Best and Worst thing about goa"
 ];
 
+// Survey questions for text-only analysis (no audio)
+const surveyQuestions = [
+  "Introduce yourself briefly (e.g., Student, Digital Nomad, Local) and tell us if your trip focus was Party or Relaxing.",
+  "Which felt like the bigger escape? (Beaches / Mountains/Trekking / Club Hopping/Partying / Other)",
+  "What was the primary motivation for your last trip to Goa? (Structured Socializing / Structured Relaxation / Pure Logistics / Spontaneous Leisure)",
+  "When looking for activities, did you prefer North Goa, South Goa, or Both? (North Goa / South Goa / Both)",
+  "What was the most annoying time-waster when planning your leisure activities? (Manual data entry / Finding vendor contact info/prices / Negotiating transport/logistics / Waiting for friends)",
+  "Did you skip any activity because you couldn't find a reliable partner? (Yes, definitely / Yes, maybe one time / No, I always found someone / No, I prefer doing all my activities alone)",
+  "For a single afternoon leisure activity, what is your typical budget? (Below 500 / 500-1500 / 1500-3000 / Over 3000)",
+  "When joining a spontaneous social event, what is your biggest concern? (High price / Low quality / Safety/verification / Logistics/Transport)"
+];
+
 // Gemini prompt for analysis
 const getAnalysisPrompt = (userData) => {
   return `You are an AI travel personality analyzer analyzing an audio interview about Goa travel preferences. Please listen to the audio file and analyze the user's responses to provide comprehensive travel personality insights with percentages and detailed reasoning.
@@ -346,6 +358,7 @@ const analyzeAudio = async (req, res) => {
     const analysisRecord = new AudioAnalysis({
       userData: userData,
       questions: questions,
+      inputPayload: { body: req.body, audioMeta: { originalname: req.file.originalname, mimetype: req.file.mimetype, size: req.file.size } },
       status: 'processing'
     });
     
@@ -357,6 +370,8 @@ const analyzeAudio = async (req, res) => {
     // Update analysis record with results
     const processingTime = Date.now() - startTime;
     analysisRecord.analysis = createSafeAnalysis(analysis);
+    analysisRecord.llmRawResponse = typeof analysis === 'string' ? analysis : '';
+    analysisRecord.llmModel = 'gemini-2.5-flash';
     analysisRecord.status = 'completed';
     analysisRecord.processingTime = processingTime;
     await analysisRecord.save();
@@ -466,6 +481,7 @@ const analyzeAudioWithJSON = async (req, res) => {
     const analysisRecord = new AudioAnalysis({
       userData: userData,
       questions: questions,
+      inputPayload: req.body,
       status: 'processing'
     });
     
@@ -511,6 +527,142 @@ const analyzeAudioWithJSON = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error during audio analysis',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+  }
+};
+
+// Text-only profile analysis (no audio). Accepts structured JSON and returns the same
+// analysis shape as audio-based flow to keep responses consistent.
+const analyzeProfileText = async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    const payload = req.body || {};
+    const user = payload.user || {};
+
+    const userData = {
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || ''
+    };
+
+    if (!userData.name || !userData.email || !userData.phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required user fields: name, email, phone'
+      });
+    }
+
+    // Create analysis record in database (processing)
+    const analysisRecord = new AudioAnalysis({
+      userData: userData,
+      questions: surveyQuestions,
+      status: 'processing'
+    });
+    await analysisRecord.save();
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    // Build prompt using provided structured inputs and the new survey questions
+    const prompt = `You are an AI travel personality analyzer. There is NO audio. Use the user's structured answers to the survey questions below to infer their travel personality and preferences. Produce the SAME JSON schema as before. Return ONLY valid JSON (no markdown, no prose).
+
+User Information:
+- Name: ${userData.name}
+- Email: ${userData.email}
+- Phone: ${userData.phone}
+
+Survey Questions (what was asked):
+${surveyQuestions.map((q, i) => `${i + 1}. ${q}`).join("\n")}
+
+User Answers (what was provided):
+${JSON.stringify(payload, null, 2)}
+
+Important guidance:
+- Base percentages, scores, and reasoning strictly on the user's provided answers.
+- Keep choices aligned with the options when applicable (e.g., Beach vs Mountains, Party vs Relaxing, etc.).
+- If data is missing, infer cautiously and lower confidence.
+- Do not include any fields beyond the schema below. Do not include markdown.
+
+Output JSON schema (return exactly this shape with concrete values):
+{
+  "transcription": "Concise synthesized summary of the user's inputs",
+  "analysis": {
+    "overallScore": 0,
+    "confidenceLevel": "High|Medium|Low",
+    "travelPersonality": [ { "trait": "string", "percentage": 0, "reason": "string" } ],
+    "preferences": [ { "preference": "Beach vs Mountains|Party vs Relaxing|...", "choice": "string", "percentage": 0, "reason": "string", "priority": "High|Medium|Low" } ],
+    "spendingHabits": { "cafeBudget": "Low|Moderate|High", "percentage": 0, "reason": "string" },
+    "goaExperience": { "score": 0, "level": "Beginner|Intermediate|Experienced", "reason": "string" }
+  },
+  "insights": {
+    "whyUseful": "2-3 sentence value summary",
+    "benefits": ["string"],
+    "opportunities": ["string"],
+    "recommendations": [ { "category": "Immediate Actions|Long-term Goals", "items": ["string"] } ]
+  }
+}`;
+
+    const result = await model.generateContent([{ text: prompt }]);
+    const response = await result.response;
+    const text = response.text();
+    console.log('[analyzeProfileText] Gemini raw response (truncated 4000 chars):', (text || '').slice(0, 4000));
+
+    let analysis;
+    try {
+      let cleanText = text.trim();
+      if (cleanText.startsWith('```json')) {
+        cleanText = cleanText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanText.startsWith('```')) {
+        cleanText = cleanText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      analysis = JSON.parse(cleanText);
+      console.log('[analyzeProfileText] Parsed analysis keys:', Object.keys(analysis || {}));
+    } catch (e) {
+      // Fallback minimal analysis using inputs
+      analysis = {
+        transcription: 'Text-based profile provided; synthesized without audio.',
+        analysis: {
+          overallScore: 75,
+          confidenceLevel: 'High',
+          travelPersonality: [],
+          preferences: [],
+          spendingHabits: { cafeBudget: 'Moderate', percentage: 70, reason: 'Based on stated budget and motivation' },
+          goaExperience: { score: 60, level: 'Intermediate', reason: 'Inferred from inputs' }
+        },
+        insights: {
+          whyUseful: 'Personalized travel profile derived from your structured inputs.',
+          benefits: [],
+          opportunities: [],
+          recommendations: []
+        }
+      };
+    }
+
+    const processingTime = Date.now() - startTime;
+    analysisRecord.analysis = createSafeAnalysis(analysis);
+    analysisRecord.llmRawResponse = text;
+    analysisRecord.llmModel = 'gemini-2.5-flash';
+    analysisRecord.status = 'completed';
+    analysisRecord.processingTime = processingTime;
+    await analysisRecord.save();
+
+    return res.json({
+      success: true,
+      data: {
+        analysisId: analysisRecord._id,
+        userData: userData,
+        analysis: createSafeAnalysis(analysis),
+        questions: questions,
+        processingTime: processingTime,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Text analysis error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error during text analysis',
       error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
     });
   }
@@ -589,6 +741,7 @@ module.exports = {
   upload,
   analyzeAudio,
   analyzeAudioWithJSON,
+  analyzeProfileText,
   getAnalysisById,
   getUserAnalyses,
   healthCheck
