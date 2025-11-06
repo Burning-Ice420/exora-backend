@@ -46,7 +46,9 @@ const tripSchema = new mongoose.Schema({
   itinerary: [{
     id: String,
     day: String,
-    timeSlot: String,
+    timeSlot: String, // Keep for backward compatibility
+    startTime: Number, // Hour in 24-hour format (e.g., 9.5 for 9:30 AM)
+    endTime: Number, // Hour in 24-hour format
     experienceId: String,
     experienceName: String,
     price: Number,
@@ -61,6 +63,17 @@ const tripSchema = new mongoose.Schema({
   membersInvolved: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  }],
+  itineraryParticipants: [{
+    itineraryId: String, // The id of the itinerary item
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
   tags: [String],
   media: [{

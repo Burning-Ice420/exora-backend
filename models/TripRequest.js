@@ -25,6 +25,13 @@ const tripRequestSchema = new mongoose.Schema({
     type: String,
     maxlength: 500
   },
+  selectedItineraries: [{
+    itineraryId: String, // The id of the itinerary item from trip.itinerary array
+    experienceName: String, // For display purposes
+    day: String,
+    startTime: Number,
+    endTime: Number
+  }],
   createdAt: {
     type: Date,
     default: Date.now

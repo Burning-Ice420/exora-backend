@@ -28,4 +28,10 @@ router.get('/my-chat-rooms', verifyToken, catchAsync(tripRequestController.getMy
 // Delete chat room (only by trip owner)
 router.delete('/chat-rooms/:chatRoomId', verifyToken, catchAsync(tripRequestController.deleteChatRoom));
 
+// Check if user has already sent a request for a trip
+router.get('/:tripId/check-request', verifyToken, catchAsync(tripRequestController.checkUserRequest));
+
+// Get itinerary participants for a trip (for trip owner)
+router.get('/:tripId/itinerary-participants', verifyToken, catchAsync(tripRequestController.getItineraryParticipants));
+
 module.exports = router;

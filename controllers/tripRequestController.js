@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 // Send trip join request
 const sendTripJoinRequest = async (req, res) => {
   const { tripId } = req.params;
-  const { message } = req.body;
+  const { message, selectedItineraries } = req.body;
   const requesterId = req.user._id;
 
   // Check if trip exists
@@ -24,11 +24,35 @@ const sendTripJoinRequest = async (req, res) => {
   // Check if request already exists
   const existingRequest = await TripRequest.findOne({
     tripId,
-    requesterId
+    requesterId,
+    status: 'pending'
   });
 
   if (existingRequest) {
     throw new ValidationError('Join request already sent');
+  }
+
+  // Validate selected itineraries if provided
+  let validatedItineraries = [];
+  if (selectedItineraries && Array.isArray(selectedItineraries) && selectedItineraries.length > 0) {
+    // Validate that all selected itinerary IDs exist in the trip
+    const tripItineraryIds = trip.itinerary.map(item => item.id || item._id?.toString());
+    validatedItineraries = selectedItineraries
+      .filter(itineraryId => tripItineraryIds.includes(itineraryId))
+      .map(itineraryId => {
+        const itineraryItem = trip.itinerary.find(item => (item.id || item._id?.toString()) === itineraryId);
+        if (itineraryItem) {
+          return {
+            itineraryId: itineraryId,
+            experienceName: itineraryItem.experienceName || itineraryItem.name,
+            day: itineraryItem.day,
+            startTime: itineraryItem.startTime,
+            endTime: itineraryItem.endTime
+          };
+        }
+        return null;
+      })
+      .filter(item => item !== null);
   }
 
   // Create new request
@@ -36,7 +60,8 @@ const sendTripJoinRequest = async (req, res) => {
     tripId,
     requesterId,
     tripOwnerId: trip.createdBy,
-    message: message || ''
+    message: message || '',
+    selectedItineraries: validatedItineraries
   });
 
   await tripRequest.save();
@@ -107,6 +132,33 @@ const acceptTripJoinRequest = async (req, res) => {
   request.respondedAt = new Date();
   await request.save();
 
+  // Add user to trip members if not already added
+  const trip = await Trip.findById(request.tripId._id);
+  if (!trip.membersInvolved.includes(request.requesterId._id)) {
+    trip.membersInvolved.push(request.requesterId._id);
+  }
+
+  // Add user to selected itineraries as participants
+  if (request.selectedItineraries && request.selectedItineraries.length > 0) {
+    request.selectedItineraries.forEach(selectedItinerary => {
+      // Check if user is already a participant for this itinerary
+      const existingParticipant = trip.itineraryParticipants.find(
+        p => p.itineraryId === selectedItinerary.itineraryId && 
+        p.userId.toString() === request.requesterId._id.toString()
+      );
+
+      if (!existingParticipant) {
+        trip.itineraryParticipants.push({
+          itineraryId: selectedItinerary.itineraryId,
+          userId: request.requesterId._id,
+          joinedAt: new Date()
+        });
+      }
+    });
+  }
+
+  await trip.save();
+
   // Create or update chat room
   let chatRoom = await ChatRoom.findOne({ tripId: request.tripId._id });
   
@@ -127,6 +179,9 @@ const acceptTripJoinRequest = async (req, res) => {
   }
 
   await chatRoom.save();
+
+  // Populate itinerary participants for response
+  await trip.populate('itineraryParticipants.userId', 'name profileImage');
 
   res.json({
     status: 'success',
@@ -202,6 +257,7 @@ const getMyTripRequestsAsOwner = async (req, res) => {
   .populate('tripId', 'name location startDate endDate')
   .populate('requesterId', 'name profileImage')
   .populate('tripOwnerId', 'name profileImage')
+  .select('+selectedItineraries') // Ensure selectedItineraries is included
   .sort({ createdAt: -1 });
 
   res.json({
@@ -255,6 +311,88 @@ const deleteChatRoom = async (req, res) => {
   });
 };
 
+// Check if user has already sent a request for a trip
+const checkUserRequest = async (req, res) => {
+  const { tripId } = req.params;
+  const userId = req.user._id;
+
+  const request = await TripRequest.findOne({
+    tripId,
+    requesterId: userId
+  })
+  .populate('requesterId', 'name profileImage')
+  .sort({ createdAt: -1 });
+
+  if (request) {
+    res.json({
+      status: 'success',
+      hasRequest: true,
+      request: {
+        _id: request._id,
+        status: request.status,
+        message: request.message,
+        selectedItineraries: request.selectedItineraries,
+        createdAt: request.createdAt
+      }
+    });
+  } else {
+    res.json({
+      status: 'success',
+      hasRequest: false
+    });
+  }
+};
+
+// Get itinerary participants for a trip (for trip owner)
+const getItineraryParticipants = async (req, res) => {
+  const { tripId } = req.params;
+  const userId = req.user._id;
+
+  // Verify trip exists and user owns it
+  const trip = await Trip.findById(tripId)
+    .populate('itineraryParticipants.userId', 'name profileImage');
+
+  if (!trip) {
+    throw new NotFoundError('Trip not found');
+  }
+
+  if (trip.createdBy.toString() !== userId.toString()) {
+    throw new ValidationError('Not authorized to view itinerary participants for this trip');
+  }
+
+  // Group participants by itinerary
+  const participantsByItinerary = {};
+  
+  trip.itineraryParticipants.forEach(participant => {
+    const itineraryId = participant.itineraryId;
+    if (!participantsByItinerary[itineraryId]) {
+      participantsByItinerary[itineraryId] = [];
+    }
+    participantsByItinerary[itineraryId].push({
+      userId: participant.userId._id,
+      name: participant.userId.name,
+      profileImage: participant.userId.profileImage,
+      joinedAt: participant.joinedAt
+    });
+  });
+
+  // Map to itinerary structure with participants
+  const itineraryWithParticipants = trip.itinerary.map(item => {
+    const itineraryId = item.id || item._id?.toString();
+    return {
+      ...item.toObject(),
+      participants: participantsByItinerary[itineraryId] || []
+    };
+  });
+
+  res.json({
+    status: 'success',
+    tripId: trip._id,
+    tripName: trip.name,
+    itineraries: itineraryWithParticipants
+  });
+};
+
 module.exports = {
   sendTripJoinRequest,
   getTripJoinRequests,
@@ -263,5 +401,7 @@ module.exports = {
   getMyTripRequests,
   getMyTripRequestsAsOwner,
   getMyChatRooms,
-  deleteChatRoom
+  deleteChatRoom,
+  getItineraryParticipants,
+  checkUserRequest
 };
