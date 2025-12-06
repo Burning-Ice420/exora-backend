@@ -37,7 +37,8 @@ const createTrip = async (req, res) => {
     budget, 
     visibility = 'public',
     description,
-    itinerary = []
+    itinerary = [],
+    startCoordinates
   } = req.body;
   
   const newTrip = new Trip({
@@ -50,6 +51,9 @@ const createTrip = async (req, res) => {
     visibility,
     description,
     itinerary,
+    startCoordinates: startCoordinates && Array.isArray(startCoordinates) && startCoordinates.length === 2 
+      ? startCoordinates 
+      : undefined,
     createdBy: req.user._id,
     membersInvolved: [req.user._id]
   });
@@ -70,7 +74,7 @@ const createTrip = async (req, res) => {
 // Update trip
 const updateTrip = async (req, res) => {
   const tripId = req.params.id;
-  const { name, location, startDate, endDate, budget, visibility, description, itinerary } = req.body;
+  const { name, location, startDate, endDate, budget, visibility, description, itinerary, startCoordinates } = req.body;
   
   const trip = await Trip.findOne({ _id: tripId, createdBy: req.user._id });
   
@@ -90,6 +94,11 @@ const updateTrip = async (req, res) => {
   if (visibility) trip.visibility = visibility;
   if (description !== undefined) trip.description = description;
   if (itinerary) trip.itinerary = itinerary;
+  if (startCoordinates !== undefined) {
+    trip.startCoordinates = startCoordinates && Array.isArray(startCoordinates) && startCoordinates.length === 2
+      ? startCoordinates
+      : null;
+  }
   
   await trip.save();
   

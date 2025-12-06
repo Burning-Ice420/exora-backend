@@ -1,182 +1,223 @@
+const Block = require('../models/Block');
 const { ValidationError, NotFoundError } = require('../middleware/errorHandler');
 
-// Mock data for now - replace with actual database operations
-let experiences = [
-  {
-    id: "1",
-    name: "Sunset Beach Bonfire",
-    host: "Sarah",
-    hostAvatar: "👩",
-    participants: 4,
-    time: "Today, 6 PM",
-    distance: "2.3 km away",
-    category: "Beach",
-    price: 0,
-    description: "Join us for an unforgettable sunset bonfire on the beach. Bring your favorite snacks and stories!",
-    image: "🔥",
-    location: { lat: 15.2993, lng: 74.1240 },
-    createdAt: new Date()
-  },
-  {
-    id: "2",
-    name: "Goa Food Tour",
-    host: "Marco",
-    hostAvatar: "👨",
-    participants: 6,
-    time: "Tomorrow, 10 AM",
-    distance: "1.8 km away",
-    category: "Food",
-    price: 500,
-    description: "Explore the best street food spots in Goa. Taste authentic Goan cuisine with a local guide.",
-    image: "🍜",
-    location: { lat: 15.2993, lng: 74.1240 },
-    createdAt: new Date()
-  },
-  {
-    id: "3",
-    name: "Water Sports Adventure",
-    host: "Raj",
-    hostAvatar: "👨",
-    participants: 3,
-    time: "This weekend",
-    distance: "3.1 km away",
-    category: "Adventure",
-    price: 1500,
-    description: "Jet skiing, parasailing, and paddleboarding. All equipment provided. Beginner-friendly!",
-    image: "🏄",
-    location: { lat: 15.2993, lng: 74.1240 },
-    createdAt: new Date()
-  },
-  {
-    id: "4",
-    name: "Yoga & Meditation",
-    host: "Priya",
-    hostAvatar: "👩",
-    participants: 8,
-    time: "Daily, 6 AM",
-    distance: "0.5 km away",
-    category: "Wellness",
-    price: 200,
-    description: "Start your day with sunrise yoga and meditation. Perfect for relaxation and connection.",
-    image: "🧘",
-    location: { lat: 15.2993, lng: 74.1240 },
-    createdAt: new Date()
-  },
-  {
-    id: "5",
-    name: "Night Market Exploration",
-    host: "Alex",
-    hostAvatar: "👨",
-    participants: 5,
-    time: "Tonight, 8 PM",
-    distance: "2.1 km away",
-    category: "Culture",
-    price: 300,
-    description: "Discover local crafts, street art, and hidden gems at the night market.",
-    image: "🎨",
-    location: { lat: 15.2993, lng: 74.1240 },
-    createdAt: new Date()
-  },
-  {
-    id: "6",
-    name: "Hiking Trail Adventure",
-    host: "Nina",
-    hostAvatar: "👩",
-    participants: 7,
-    time: "Sunday, 7 AM",
-    distance: "4.2 km away",
-    category: "Adventure",
-    price: 0,
-    description: "Scenic hiking trail with breathtaking views. Moderate difficulty. Bring water and snacks.",
-    image: "⛰️",
-    location: { lat: 15.2993, lng: 74.1240 },
-    createdAt: new Date()
-  }
-];
-
-// Get experiences
+// Get experiences (activities from database)
 const getExperiences = async (req, res) => {
-  const { category, priceRange, user, limit = 10, page = 1 } = req.query;
-  
-  let filteredExperiences = [...experiences];
-  
-  // Filter by category
-  if (category && category !== 'all') {
-    filteredExperiences = filteredExperiences.filter(exp => exp.category === category);
+  try {
+    const { category, priceRange, user, limit = 10, page = 1, search = '' } = req.query;
+    
+    // Build query for activities
+    const query = { 
+      type: 'Activity',
+      status: { $ne: 'cancelled' } // Exclude cancelled activities
+    };
+    
+    // Filter by category (using tags or activityType)
+    if (category && category !== 'all') {
+      query.$or = [
+        { 'categoryDetails.activity.activityType': { $regex: category, $options: 'i' } },
+        { tags: { $in: [category] } }
+      ];
+    }
+    
+    // Filter by price range
+    if (priceRange === 'free') {
+      query.$or = [
+        { 'cost.estimated': 0 },
+        { 'cost.estimated': { $exists: false } },
+        { 'cost.estimated': null }
+      ];
+    } else if (priceRange === 'paid') {
+      query['cost.estimated'] = { $gt: 0 };
+    }
+    
+    // Filter by user (for user's own experiences)
+    if (user) {
+      query.createdBy = user;
+    }
+    
+    // Search filter
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { destination: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Get activities
+    const activities = await Block.find(query)
+      .populate('createdBy', 'name email profileImage')
+      .populate('membersInvolved', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    // Transform activities to experience format for frontend compatibility
+    const experiences = activities.map(activity => ({
+      id: activity._id.toString(),
+      name: activity.title,
+      host: activity.createdBy?.name || 'Admin',
+      hostAvatar: activity.createdBy?.profileImage || '👤',
+      hostId: activity.createdBy?._id?.toString(),
+      participants: activity.membersInvolved?.length || 0,
+      time: activity.time || 'TBD',
+      distance: activity.location?.name ? `${activity.location.name}` : 'Location TBD',
+      category: activity.categoryDetails?.activity?.activityType || activity.tags?.[0] || 'Activity',
+      price: activity.cost?.estimated || 0,
+      description: activity.description || activity.details?.description || '',
+      image: activity.media?.images?.[0] || '🎯',
+      location: activity.location?.coordinates || { lat: 15.2993, lng: 74.1240 },
+      duration: activity.details?.duration || activity.timing?.duration || '2 hours',
+      difficulty: activity.categoryDetails?.activity?.difficulty || activity.requirements?.physicalFitness || 'Easy',
+      createdAt: activity.createdAt,
+      status: activity.status,
+      destination: activity.destination
+    }));
+    
+    const total = await Block.countDocuments(query);
+    
+    res.json({
+      status: 'success',
+      experiences,
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    });
+  } catch (error) {
+    throw error;
   }
-  
-  // Filter by price range
-  if (priceRange === 'free') {
-    filteredExperiences = filteredExperiences.filter(exp => exp.price === 0);
-  } else if (priceRange === 'paid') {
-    filteredExperiences = filteredExperiences.filter(exp => exp.price > 0);
-  }
-  
-  // Filter by user (for user's own experiences)
-  if (user) {
-    filteredExperiences = filteredExperiences.filter(exp => exp.hostId === user);
-  }
-  
-  // Pagination
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + parseInt(limit);
-  const paginatedExperiences = filteredExperiences.slice(startIndex, endIndex);
-  
-  res.json({
-    status: 'success',
-    experiences: paginatedExperiences,
-    total: filteredExperiences.length,
-    page: parseInt(page),
-    limit: parseInt(limit)
-  });
 };
 
-// Create experience
+// Create experience (as Activity block)
 const createExperience = async (req, res) => {
-  const { name, description, category, price, time, location } = req.body;
-  
-  const newExperience = {
-    id: (experiences.length + 1).toString(),
-    name,
-    description,
-    category,
-    price: parseInt(price),
-    time,
-    location,
-    host: req.user.name,
-    hostAvatar: "👤",
-    hostId: req.user._id,
-    participants: 0,
-    distance: "0 km away",
-    image: "🎯",
-    createdAt: new Date()
-  };
-  
-  experiences.push(newExperience);
-  
-  res.status(201).json({
-    status: 'success',
-    experience: newExperience
-  });
+  try {
+    const { name, description, category, price, time, location, duration, difficulty } = req.body;
+    
+    // Create activity block
+    const activityData = {
+      type: 'Activity',
+      title: name,
+      destination: location?.name || 'Goa',
+      description: description,
+      createdBy: req.user._id,
+      date: new Date(),
+      time: time || '00:00',
+      status: 'published',
+      approved: true,
+      cost: {
+        estimated: parseInt(price) || 0,
+        currency: 'USD',
+        perPerson: false
+      },
+      location: location || {
+        coordinates: { latitude: 15.2993, longitude: 74.1240 }
+      },
+      categoryDetails: {
+        activity: {
+          activityType: category || 'Activity',
+          difficulty: difficulty || 'Easy',
+          weatherDependent: false,
+          indoor: false
+        }
+      },
+      details: {
+        title: name,
+        description: description,
+        cost: parseInt(price) || 0,
+        duration: duration || '2 hours',
+        activityType: category || 'Activity',
+        difficulty: difficulty || 'Easy'
+      },
+      tags: category ? [category] : []
+    };
+    
+    const activity = new Block(activityData);
+    await activity.save();
+    
+    const populatedActivity = await Block.findById(activity._id)
+      .populate('createdBy', 'name email profileImage');
+    
+    // Transform to experience format
+    const experience = {
+      id: populatedActivity._id.toString(),
+      name: populatedActivity.title,
+      host: populatedActivity.createdBy?.name || 'User',
+      hostAvatar: populatedActivity.createdBy?.profileImage || '👤',
+      hostId: populatedActivity.createdBy?._id?.toString(),
+      participants: 0,
+      time: populatedActivity.time,
+      distance: 'New',
+      category: category || 'Activity',
+      price: populatedActivity.cost?.estimated || 0,
+      description: populatedActivity.description,
+      image: '🎯',
+      location: populatedActivity.location?.coordinates || { lat: 15.2993, lng: 74.1240 },
+      createdAt: populatedActivity.createdAt
+    };
+    
+    res.status(201).json({
+      status: 'success',
+      experience
+    });
+  } catch (error) {
+    throw error;
+  }
 };
 
-// Join experience
+// Join experience (add user to membersInvolved)
 const joinExperience = async (req, res) => {
-  const experienceId = req.params.id;
-  const experience = experiences.find(exp => exp.id === experienceId);
-  
-  if (!experience) {
-    throw new NotFoundError('Experience not found');
+  try {
+    const experienceId = req.params.id;
+    const activity = await Block.findById(experienceId);
+    
+    if (!activity) {
+      throw new NotFoundError('Experience not found');
+    }
+    
+    if (activity.type !== 'Activity') {
+      throw new ValidationError('This is not an activity');
+    }
+    
+    // Add user to membersInvolved if not already there
+    if (!activity.membersInvolved.includes(req.user._id)) {
+      activity.membersInvolved.push(req.user._id);
+      await activity.save();
+    }
+    
+    const populatedActivity = await Block.findById(activity._id)
+      .populate('createdBy', 'name email profileImage')
+      .populate('membersInvolved', 'name email');
+    
+    // Transform to experience format
+    const experience = {
+      id: populatedActivity._id.toString(),
+      name: populatedActivity.title,
+      host: populatedActivity.createdBy?.name || 'Admin',
+      hostAvatar: populatedActivity.createdBy?.profileImage || '👤',
+      hostId: populatedActivity.createdBy?._id?.toString(),
+      participants: populatedActivity.membersInvolved?.length || 0,
+      time: populatedActivity.time,
+      distance: populatedActivity.location?.name || 'Location TBD',
+      category: populatedActivity.categoryDetails?.activity?.activityType || populatedActivity.tags?.[0] || 'Activity',
+      price: populatedActivity.cost?.estimated || 0,
+      description: populatedActivity.description,
+      image: '🎯',
+      location: populatedActivity.location?.coordinates || { lat: 15.2993, lng: 74.1240 },
+      createdAt: populatedActivity.createdAt
+    };
+    
+    res.json({
+      status: 'success',
+      message: 'Successfully joined the experience',
+      experience
+    });
+  } catch (error) {
+    throw error;
   }
-  
-  // In a real app, you'd add the user to the participants list
-  experience.participants += 1;
-  
-  res.json({
-    status: 'success',
-    message: 'Successfully joined the experience',
-    experience
-  });
 };
 
 module.exports = {

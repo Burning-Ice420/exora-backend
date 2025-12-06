@@ -16,6 +16,18 @@ const tripSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  startCoordinates: {
+    type: [Number], // [latitude, longitude]
+    validate: {
+      validator: function(v) {
+        return !v || (Array.isArray(v) && v.length === 2 && 
+          typeof v[0] === 'number' && typeof v[1] === 'number' &&
+          v[0] >= -90 && v[0] <= 90 && // latitude range
+          v[1] >= -180 && v[1] <= 180); // longitude range
+      },
+      message: 'startCoordinates must be an array of [latitude, longitude] with valid ranges'
+    }
+  },
   startDate: {
     type: Date,
     required: true
@@ -89,5 +101,7 @@ const tripSchema = new mongoose.Schema({
 tripSchema.index({ createdBy: 1, status: 1 });
 tripSchema.index({ destination: 1 });
 tripSchema.index({ startDate: 1, endDate: 1 });
+// Geospatial index for startCoordinates (sparse index - only indexes documents with startCoordinates)
+tripSchema.index({ startCoordinates: '2dsphere' }, { sparse: true });
 
 module.exports = mongoose.model('Trip', tripSchema);

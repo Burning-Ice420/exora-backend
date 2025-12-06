@@ -30,6 +30,12 @@ app.use(compression());
 
 // CORS - allow all origins with default settings
 app.use(require('cors')());
+// Cookie parser for admin sessions (optional)
+try {
+  app.use(require('cookie-parser')());
+} catch (e) {
+  // cookie-parser not installed, continue without it
+}
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -60,6 +66,7 @@ app.use('/api/requests', require('./routes/requests'));
 app.use('/api/trip-requests', require('./routes/tripRequests'));
 app.use('/api/uploads', require('./routes/uploads'));
 app.use('/api/audio-analysis', require('./routes/audioAnalysis'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
