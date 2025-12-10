@@ -67,6 +67,7 @@ app.use('/api/trip-requests', require('./routes/tripRequests'));
 app.use('/api/uploads', require('./routes/uploads'));
 app.use('/api/audio-analysis', require('./routes/audioAnalysis'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/waitlisters', require('./routes/waitlisters'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
