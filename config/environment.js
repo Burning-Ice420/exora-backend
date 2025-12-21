@@ -31,6 +31,10 @@ const config = {
   // API Keys
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  
+  // Razorpay
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
 
   // AI Services
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,

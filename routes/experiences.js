@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, optionalAuth } = require('../middleware/auth');
 const { catchAsync } = require('../middleware/errorHandler');
 const experienceController = require('../controllers/experienceController');
 
-// Get experiences
-router.get('/', verifyToken, catchAsync(experienceController.getExperiences));
+// Get experiences (public, optional auth)
+router.get('/', optionalAuth, catchAsync(experienceController.getExperiences));
 
 // Create experience
 router.post('/', verifyToken, [
