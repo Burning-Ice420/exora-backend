@@ -1,6 +1,6 @@
 const { body, validationResult } = require('express-validator');
 const Waitlister = require('../models/Waitlister');
-const { ValidationError, ConflictError } = require('../middleware/errorHandler');
+const { ValidationError, ConflictError, catchAsync } = require('../middleware/errorHandler');
 
 // Validation rules
 const validateWaitlister = [
@@ -24,7 +24,7 @@ const validateWaitlister = [
 ];
 
 // Add to waitlist
-const addToWaitlist = async (req, res) => {
+const addToWaitlist = catchAsync(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new ValidationError(errors.array().map(err => err.msg).join(', '));
@@ -56,10 +56,10 @@ const addToWaitlist = async (req, res) => {
       name: waitlister.name
     }
   });
-};
+});
 
 // Get all waitlisters (admin only - you can add auth middleware later)
-const getWaitlisters = async (req, res) => {
+const getWaitlisters = catchAsync(async (req, res) => {
   const { page = 1, limit = 50, notified } = req.query;
   const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -86,10 +86,10 @@ const getWaitlisters = async (req, res) => {
       pages: Math.ceil(total / parseInt(limit))
     }
   });
-};
+});
 
 // Get waitlister count
-const getWaitlistCount = async (req, res) => {
+const getWaitlistCount = catchAsync(async (req, res) => {
   const total = await Waitlister.countDocuments();
   const notified = await Waitlister.countDocuments({ notified: true });
   const notNotified = await Waitlister.countDocuments({ notified: false });
@@ -102,7 +102,7 @@ const getWaitlistCount = async (req, res) => {
       notNotified
     }
   });
-};
+});
 
 module.exports = {
   addToWaitlist,
