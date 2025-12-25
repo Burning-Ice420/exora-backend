@@ -34,6 +34,14 @@ router.post('/activities', catchAsync(adminController.createActivity));
 router.put('/activities/:id', catchAsync(adminController.updateActivity));
 router.delete('/activities/:id', catchAsync(adminController.deleteActivity));
 
+// Exclusives activities (used by /api/activities and frontend "Exclusives by Exora")
+router.get('/exclusive-activities', catchAsync(adminController.getAllExclusiveActivities));
+router.get('/exclusive-activities/stats', catchAsync(adminController.getExclusiveActivityStats));
+router.get('/exclusive-activities/:id', catchAsync(adminController.getExclusiveActivityById));
+router.post('/exclusive-activities', catchAsync(adminController.createExclusiveActivity));
+router.put('/exclusive-activities/:id', catchAsync(adminController.updateExclusiveActivity));
+router.delete('/exclusive-activities/:id', catchAsync(adminController.deleteExclusiveActivity));
+
 // Bulk upload CSV
 router.post('/activities/bulk-upload', upload.single('csv'), catchAsync(adminController.bulkUploadActivities));
 

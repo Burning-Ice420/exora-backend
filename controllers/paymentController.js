@@ -32,10 +32,11 @@ const createOrder = async (req, res) => {
     }
 
     // Create order in Razorpay
+    const receipt = `act_${activityId.toString().slice(-10)}_${Date.now().toString(36)}`.slice(0, 40);
     const options = {
       amount: amount, // Amount in paise
       currency: 'INR',
-      receipt: `activity_${activityId}_${Date.now()}`,
+      receipt,
       notes: {
         activityId: activityId.toString(),
         activityName: activityName || activity.name,

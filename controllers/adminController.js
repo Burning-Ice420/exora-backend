@@ -1,4 +1,5 @@
 const Block = require('../models/Block');
+const Activity = require('../models/Activity');
 const { ValidationError, NotFoundError } = require('../middleware/errorHandler');
 
 // Get all activities (blocks with type 'Activity')
@@ -317,6 +318,159 @@ const getActivityStats = async (req, res) => {
   }
 };
 
+// ==============================
+// Exclusives Activities (Activity model used by /api/activities)
+// ==============================
+
+const getAllExclusiveActivities = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = '', status = '', category = '', featured = '' } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { longDescription: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } },
+        { 'location.name': { $regex: search, $options: 'i' } },
+        { 'location.city': { $regex: search, $options: 'i' } },
+        { 'location.state': { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    if (status) query.status = status;
+    if (category) query.category = category;
+    if (featured === 'true') query.featured = true;
+    if (featured === 'false') query.featured = false;
+
+    const activities = await Activity.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Activity.countDocuments(query);
+
+    res.json({
+      status: 'success',
+      activities,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getExclusiveActivityById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await Activity.findById(id);
+    if (!activity) throw new NotFoundError('Activity not found');
+
+    res.json({ status: 'success', activity });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const createExclusiveActivity = async (req, res) => {
+  try {
+    const data = { ...req.body };
+
+    if (!data.name) throw new ValidationError('Name is required');
+    if (!data.description) throw new ValidationError('Description is required');
+    if (data.price === undefined || data.price === null) throw new ValidationError('Price is required');
+    if (!data.category) throw new ValidationError('Category is required');
+    if (!data.date) throw new ValidationError('Date is required');
+    if (!data.time) throw new ValidationError('Time is required');
+
+    const activity = new Activity(data);
+    await activity.save();
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Exclusive activity created successfully',
+      activity,
+    });
+  } catch (error) {
+    // Handle duplicate slug
+    if (error && error.code === 11000 && error.keyPattern && error.keyPattern.slug) {
+      throw new ValidationError('Slug already exists. Please change the name or provide a unique slug.');
+    }
+    throw error;
+  }
+};
+
+const updateExclusiveActivity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await Activity.findById(id);
+    if (!activity) throw new NotFoundError('Activity not found');
+
+    Object.keys(req.body).forEach((key) => {
+      if (req.body[key] !== undefined) {
+        activity[key] = req.body[key];
+      }
+    });
+
+    await activity.save();
+
+    res.json({
+      status: 'success',
+      message: 'Exclusive activity updated successfully',
+      activity,
+    });
+  } catch (error) {
+    if (error && error.code === 11000 && error.keyPattern && error.keyPattern.slug) {
+      throw new ValidationError('Slug already exists. Please provide a unique slug.');
+    }
+    throw error;
+  }
+};
+
+const deleteExclusiveActivity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const activity = await Activity.findById(id);
+    if (!activity) throw new NotFoundError('Activity not found');
+
+    await Activity.findByIdAndDelete(id);
+
+    res.json({
+      status: 'success',
+      message: 'Exclusive activity deleted successfully',
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getExclusiveActivityStats = async (req, res) => {
+  try {
+    const total = await Activity.countDocuments({});
+    const active = await Activity.countDocuments({ status: 'active' });
+    const upcoming = await Activity.countDocuments({ status: 'upcoming' });
+    const soldOut = await Activity.countDocuments({ status: 'sold_out' });
+    const cancelled = await Activity.countDocuments({ status: 'cancelled' });
+    const featured = await Activity.countDocuments({ featured: true });
+
+    res.json({
+      status: 'success',
+      stats: { total, active, upcoming, soldOut, cancelled, featured },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getAllActivities,
   getActivityById,
@@ -324,6 +478,12 @@ module.exports = {
   updateActivity,
   deleteActivity,
   bulkUploadActivities,
-  getActivityStats
+  getActivityStats,
+  getAllExclusiveActivities,
+  getExclusiveActivityById,
+  createExclusiveActivity,
+  updateExclusiveActivity,
+  deleteExclusiveActivity,
+  getExclusiveActivityStats,
 };
 
