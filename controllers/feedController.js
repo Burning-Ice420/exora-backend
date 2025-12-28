@@ -1,6 +1,7 @@
 const ContentFeed = require('../models/ContentFeed');
 const User = require('../models/User');
 const { catchAsync } = require('../middleware/errorHandler');
+const spellsService = require('../services/spellsService');
 
 // Get all feed posts
 const getFeedPosts = catchAsync(async (req, res) => {
@@ -44,21 +45,44 @@ const getFeedPosts = catchAsync(async (req, res) => {
 
 // Create a new feed post
 const createFeedPost = catchAsync(async (req, res) => {
-  const { text, locationTag, images } = req.body;
+  const { text, locationTag, images, type = 'Post', tripPost } = req.body;
   const userId = req.user.id;
 
-  const newPost = new ContentFeed({
+  const postData = {
     userId,
-    type: 'Post',
+    type: type || 'Post',
     text,
     locationTag,
     images: images || [],
     likes: [],
     timestamp: new Date()
-  });
+  };
 
+  // Add trip post fields if type is Trip
+  if (type === 'Trip' && tripPost) {
+    postData.tripPost = {
+      tripId: tripPost.tripId || undefined,
+      date: tripPost.date ? new Date(tripPost.date) : undefined,
+      capacity: tripPost.capacity ? parseInt(tripPost.capacity) : undefined,
+      location: tripPost.location,
+      coordinates: tripPost.coordinates || undefined,
+      joinable: tripPost.joinable !== false
+    };
+  }
+
+  const newPost = new ContentFeed(postData);
   const savedPost = await newPost.save();
   await savedPost.populate('userId', 'name profileImage');
+
+  // Award spells for creating a post (only for regular posts, not trip posts)
+  if (newPost.type === 'Post') {
+    try {
+      await spellsService.awardCreatePost(userId, savedPost._id);
+    } catch (error) {
+      console.error('Error awarding spells for creating post:', error);
+      // Don't fail the request if spells update fails
+    }
+  }
 
   res.status(201).json({
     success: true,

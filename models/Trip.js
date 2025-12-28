@@ -87,6 +87,31 @@ const tripSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  // Attendance tracking for host
+  attendance: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'showed_up', 'no_show'],
+      default: 'pending'
+    },
+    markedAt: {
+      type: Date
+    },
+    markedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
+  // Track if spells were awarded for hosting (prevent double counting)
+  spellsAwardedForHost: {
+    type: Boolean,
+    default: false
+  },
   tags: [String],
   media: [{
     url: String,

@@ -66,13 +66,26 @@ const sendTripJoinRequest = async (req, res) => {
 
   await tripRequest.save();
 
-  // Populate user data
-  await tripRequest.populate('requesterId', 'name profileImage');
+  // Populate user data (for requester, we'll show limited info in get requests)
+  await tripRequest.populate('requesterId', 'name exoraSpells');
   await tripRequest.populate('tripOwnerId', 'name profileImage');
+
+  // Return privacy-filtered request for requester
+  const requester = tripRequest.requesterId;
+  const requesterObj = requester.toObject ? requester.toObject() : requester;
+  
+  const privacyFilteredRequest = {
+    ...tripRequest.toObject(),
+    requesterId: {
+      _id: requesterObj._id,
+      initials: getInitials(requesterObj.name),
+      exoraSpells: requesterObj.exoraSpells || 0
+    }
+  };
 
   res.status(201).json({
     status: 'success',
-    request: tripRequest
+    request: privacyFilteredRequest
   });
 };
 
@@ -96,14 +109,45 @@ const getTripJoinRequests = async (req, res) => {
     tripOwnerId: userId,
     status: 'pending'
   })
-  .populate('requesterId', 'name profileImage')
+  .populate('requesterId', 'name exoraSpells')
   .sort({ createdAt: -1 });
+
+  // Transform requests to show only initials + spells (privacy-first)
+  const privacyFilteredRequests = requests.map(request => {
+    const requester = request.requesterId;
+    const requesterObj = requester.toObject ? requester.toObject() : requester;
+    
+    return {
+      _id: request._id,
+      tripId: request.tripId,
+      message: request.message,
+      selectedItineraries: request.selectedItineraries,
+      status: request.status,
+      createdAt: request.createdAt,
+      requester: {
+        _id: requesterObj._id,
+        initials: getInitials(requesterObj.name),
+        exoraSpells: requesterObj.exoraSpells || 0
+        // No name, no profile image - privacy first
+      }
+    };
+  });
 
   res.json({
     status: 'success',
-    requests
+    requests: privacyFilteredRequests
   });
 };
+
+// Helper function to get user initials
+function getInitials(name) {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
 
 // Accept trip join request
 const acceptTripJoinRequest = async (req, res) => {

@@ -8,7 +8,7 @@ const contentFeedSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['Post', 'Itinerary'],
+    enum: ['Post', 'Itinerary', 'Trip'],
     required: true
   },
   text: {
@@ -30,6 +30,21 @@ const contentFeedSchema = new mongoose.Schema({
   itineraryRef: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Itinerary'
+  },
+  // Trip post fields (when type is 'Trip')
+  tripPost: {
+    tripId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Trip'
+    },
+    date: Date,
+    capacity: Number,
+    location: String,
+    coordinates: [Number], // [latitude, longitude] for nearby discovery
+    joinable: {
+      type: Boolean,
+      default: true
+    }
   },
   locationTag: {
     type: String

@@ -48,6 +48,14 @@ const register = async (req, res) => {
   };
 
   const user = new User(userData);
+  
+  // Mark Stage 1 as completed (basic info)
+  user.profileStagesCompleted.stage1 = true;
+  
+  await user.save();
+
+  // Calculate initial profile completion
+  user.profileCompletion = user.calculateProfileCompletion();
   await user.save();
 
   const token = jwt.sign({ 
@@ -71,6 +79,9 @@ const register = async (req, res) => {
       photos: user.photos,
       profileImage: user.profileImage,
       travel_type: user.travel_type,
+      exoraSpells: user.exoraSpells || 0,
+      profileCompletion: user.profileCompletion || 0,
+      profileStagesCompleted: user.profileStagesCompleted,
       createdAt: user.createdAt
     }
   });
@@ -100,6 +111,10 @@ const login = async (req, res) => {
     travel_type: user.travel_type 
   }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
   
+  // Recalculate profile completion
+  user.profileCompletion = user.calculateProfileCompletion();
+  await user.save();
+
   res.json({
     status: 'success',
     token,
@@ -116,6 +131,9 @@ const login = async (req, res) => {
       photos: user.photos,
       profileImage: user.profileImage,
       travel_type: user.travel_type,
+      exoraSpells: user.exoraSpells || 0,
+      profileCompletion: user.profileCompletion || 0,
+      profileStagesCompleted: user.profileStagesCompleted,
       createdAt: user.createdAt
     }
   });

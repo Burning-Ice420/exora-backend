@@ -114,6 +114,10 @@ const login = async (req, res) => {
     travel_type: user.travel_type 
   }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
   
+  // Recalculate profile completion
+  user.profileCompletion = user.calculateProfileCompletion();
+  await user.save();
+
   res.json({
     status: 'success',
     token,
@@ -130,6 +134,9 @@ const login = async (req, res) => {
       photos: user.photos,
       travel_type: user.travel_type,
       family_members: user.family_members,
+      exoraSpells: user.exoraSpells || 0,
+      profileCompletion: user.profileCompletion || 0,
+      profileStagesCompleted: user.profileStagesCompleted,
       createdAt: user.createdAt
     }
   });
@@ -188,6 +195,14 @@ const updateUser = async (req, res) => {
     new: true, 
     runValidators: true 
   }).select('-passwordHash');
+  
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  // Recalculate profile completion
+  user.profileCompletion = user.calculateProfileCompletion();
+  await user.save();
   
   res.json({
     status: 'success',
