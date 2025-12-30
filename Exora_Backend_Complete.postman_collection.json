@@ -1,0 +1,2281 @@
+{
+  "info": {
+    "name": "Exora Backend - Complete API Collection",
+    "description": "Comprehensive Postman collection for all Exora backend endpoints. Includes authentication, users, trips, blocks, activities, experiences, connections, feed, payments, admin, audio analysis, and more.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tripId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "blockId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "itineraryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "activityId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "requestId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "API Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication (Auth Routes)",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('authToken', response.token);",
+                  "    }",
+                  "    if (response.user && response.user._id) {",
+                  "        pm.collectionVariables.set('userId', response.user._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"age\": 28,\n  \"location\": \"New York, USA\",\n  \"bio\": \"Travel enthusiast\",\n  \"personalityType\": \"explorer\",\n  \"travelPreferences\": [\"adventure\", \"culture\"],\n  \"interests\": [\"Adventure\", \"Food\", \"Culture\"],\n  \"photos\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('authToken', response.token);",
+                  "    }",
+                  "    if (response.user && response.user._id) {",
+                  "        pm.collectionVariables.set('userId', response.user._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"bio\": \"Updated bio\",\n  \"interests\": [\"Adventure\", \"Food\", \"Culture\", \"Photography\"],\n  \"personalityType\": \"social\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('authToken', response.token);",
+                  "    }",
+                  "    if (response.user && response.user._id) {",
+                  "        pm.collectionVariables.set('userId', response.user._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"password123\",\n  \"age\": 25,\n  \"location\": \"San Francisco, USA\",\n  \"bio\": \"Love traveling and exploring new places\",\n  \"personalityType\": \"planner\",\n  \"travelPreferences\": [\"beach\", \"mountains\"],\n  \"interests\": [\"Photography\", \"Hiking\", \"Food\"],\n  \"travel_type\": \"solo_traveler\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('authToken', response.token);",
+                  "    }",
+                  "    if (response.user && response.user._id) {",
+                  "        pm.collectionVariables.set('userId', response.user._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Current User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Updated\",\n  \"bio\": \"Updated bio text\",\n  \"interests\": [\"Photography\", \"Hiking\", \"Food\", \"Music\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "Get User's Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Trips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('tripId', response.data._id);",
+                  "    } else if (response._id) {",
+                  "        pm.collectionVariables.set('tripId', response._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Europe Adventure 2024\",\n  \"location\": \"Paris, France\",\n  \"startDate\": \"2024-06-01T00:00:00.000Z\",\n  \"endDate\": \"2024-06-15T00:00:00.000Z\",\n  \"budget\": 3000,\n  \"description\": \"A 2-week journey through Europe\",\n  \"isPublic\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Trip",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Europe Adventure 2024\",\n  \"budget\": 3500,\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Trip",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}/attendance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}", "attendance"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"status\": \"showed_up\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}/attendance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}", "attendance"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Trip Requests",
+      "item": [
+        {
+          "name": "Send Trip Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"I'd love to join this trip!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/{{tripId}}/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "{{tripId}}", "request"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Join Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/{{tripId}}/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "{{tripId}}", "requests"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Trip Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/requests/{{requestId}}/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "requests", "{{requestId}}", "accept"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Trip Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/requests/{{requestId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "requests", "{{requestId}}", "reject"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Trip Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/my-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "my-requests"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Trips Requests (As Owner)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/my-trips-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "my-trips-requests"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Chat Rooms",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/my-chat-rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "my-chat-rooms"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Chat Room",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/chat-rooms/CHAT_ROOM_ID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "chat-rooms", "CHAT_ROOM_ID"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check User Request",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/{{tripId}}/check-request",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "{{tripId}}", "check-request"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Itinerary Participants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-requests/{{tripId}}/itinerary-participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trip-requests", "{{tripId}}", "itinerary-participants"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Blocks",
+      "item": [
+        {
+          "name": "Create Block",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('blockId', response.data._id);",
+                  "    } else if (response._id) {",
+                  "        pm.collectionVariables.set('blockId', response._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Visit Eiffel Tower\",\n  \"destination\": \"Eiffel Tower, Paris\",\n  \"type\": \"Activity\",\n  \"time\": \"10:00\",\n  \"date\": \"2024-06-05\",\n  \"radius\": 5,\n  \"details\": {\n    \"title\": \"Eiffel Tower Tour\",\n    \"description\": \"Iconic landmark in Paris\",\n    \"duration\": \"2 hours\",\n    \"cost\": 25\n  },\n  \"membersInvolved\": [\"{{userId}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Suggest Sub-Block",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentBlockId\": \"{{blockId}}\",\n  \"destination\": \"Local Cafe\",\n  \"radius\": 2.5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/suggest",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "suggest"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Sub-Block",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/approve/SUB_BLOCK_ID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "approve", "SUB_BLOCK_ID"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Sub-Block",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approved\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/approve/SUB_BLOCK_ID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "approve", "SUB_BLOCK_ID"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Blocks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/my-blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "my-blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sub-Blocks for Main Block",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/{{blockId}}/sub-blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "{{blockId}}", "sub-blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Block by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/{{blockId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "{{blockId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Blocks for Itinerary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/itinerary/{{itineraryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "itinerary", "{{itineraryId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Block",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Block Title\",\n  \"details\": {\n    \"description\": \"Updated description\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/{{blockId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "{{blockId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Block",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/{{blockId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "{{blockId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Family Blocks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/family/blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "family", "blocks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Family Member to Block",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"MEMBER_USER_ID\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/blocks/{{blockId}}/add-member",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "blocks", "{{blockId}}", "add-member"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Itineraries",
+      "item": [
+        {
+          "name": "Create Itinerary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response._id) {",
+                  "        pm.collectionVariables.set('itineraryId', response._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Amazing Europe Trip\",\n  \"description\": \"A 2-week journey through Europe\",\n  \"totalBudget\": 3000,\n  \"isPublic\": true,\n  \"departureDate\": \"2024-06-01\",\n  \"arrivalDate\": \"2024-06-15\",\n  \"destination\": \"Europe\",\n  \"tags\": [\"Europe\", \"Adventure\", \"Culture\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "create"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Itineraries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Itineraries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Clone Itinerary",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/itineraries/clone/{{itineraryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "itineraries", "clone", "{{itineraryId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Activities",
+      "item": [
+        {
+          "name": "Get All Activities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activities"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Activity by Slug or ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Experiences",
+      "item": [
+        {
+          "name": "Get Experiences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/experiences",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "experiences"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Experience",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Beach Paradise Experience\",\n  \"description\": \"A relaxing day at the beach with water sports\",\n  \"category\": \"Beach\",\n  \"price\": 150,\n  \"location\": \"Miami Beach, FL\",\n  \"duration\": \"6 hours\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/experiences",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "experiences"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Join Experience",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/experiences/EXPERIENCE_ID/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "experiences", "EXPERIENCE_ID", "join"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Connections",
+      "item": [
+        {
+          "name": "Get User's Connections",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/connections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "connections"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Connection Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/connections/USER_ID/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "connections", "USER_ID", "request"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Connection Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/connections/CONNECTION_ID/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "connections", "CONNECTION_ID", "accept"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Connection Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/connections/CONNECTION_ID/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "connections", "CONNECTION_ID", "reject"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feed",
+      "item": [
+        {
+          "name": "Get Feed Posts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/feed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Feed Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('postId', response.data._id);",
+                  "    } else if (response._id) {",
+                  "        pm.collectionVariables.set('postId', response._id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Just had an amazing trip to Paris! 🗼\",\n  \"locationTag\": \"Paris, France\",\n  \"images\": [\"https://example.com/image1.jpg\", \"https://example.com/image2.jpg\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/feed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Like/Unlike Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/feed/{{postId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed", "{{postId}}", "like"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Comment to Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Looks amazing! I'd love to visit there too.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/feed/{{postId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed", "{{postId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Post Comments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/feed/{{postId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed", "{{postId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Save/Unsave Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/feed/{{postId}}/save",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed", "{{postId}}", "save"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/feed/{{postId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "feed", "{{postId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Requests (Block Join Requests)",
+      "item": [
+        {
+          "name": "Send Join Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"blockId\": \"{{blockId}}\",\n  \"senderId\": \"{{userId}}\",\n  \"receiverId\": \"RECEIVER_USER_ID\",\n  \"message\": \"Hi! I'd love to join this activity.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "send"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Requests (All)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "user", "{{userId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Sent Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/user/{{userId}}?type=sent",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "user", "{{userId}}"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "sent"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Received Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/user/{{userId}}?type=received",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "user", "{{userId}}"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "received"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Request Status (Accept)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Accepted\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/{{requestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "{{requestId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Request Status (Reject)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Rejected\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/{{requestId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "requests", "{{requestId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Map & Location",
+      "item": [
+        {
+          "name": "Get Nearby Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/map/nearby?lat=40.7128&lng=-74.006&radius=10&ageMin=20&ageMax=35&gender=Male&interests=Adventure,Food",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "map", "nearby"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "40.7128",
+                  "description": "Latitude"
+                },
+                {
+                  "key": "lng",
+                  "value": "-74.006",
+                  "description": "Longitude"
+                },
+                {
+                  "key": "radius",
+                  "value": "10",
+                  "description": "Radius in km (default: 10)"
+                },
+                {
+                  "key": "ageMin",
+                  "value": "20",
+                  "disabled": true
+                },
+                {
+                  "key": "ageMax",
+                  "value": "35",
+                  "disabled": true
+                },
+                {
+                  "key": "gender",
+                  "value": "Male",
+                  "disabled": true
+                },
+                {
+                  "key": "interests",
+                  "value": "Adventure,Food",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Uploads",
+      "item": [
+        {
+          "name": "Upload Profile Image",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "uploads", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Feed Images",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Multiple images (up to 10)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/feed",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "uploads", "feed"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Image",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/uploads/PUBLIC_ID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "uploads", "PUBLIC_ID"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Razorpay Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 1000,\n  \"activityId\": \"{{activityId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/create-order",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "create-order"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpay_order_id\": \"order_xxxxxxxxxxxxx\",\n  \"razorpay_payment_id\": \"pay_xxxxxxxxxxxxx\",\n  \"razorpay_signature\": \"signature_xxxxxxxxxxxxx\",\n  \"activityId\": \"{{activityId}}\",\n  \"attendeeName\": \"John Doe\",\n  \"attendeeEmail\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "verify"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.token) {",
+                  "        pm.collectionVariables.set('adminToken', response.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Activity Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Activity by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Activity\",\n  \"description\": \"Activity description\",\n  \"category\": \"Adventure\",\n  \"price\": 100,\n  \"location\": \"Location name\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Activity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Activity Name\",\n  \"price\": 150\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Activity",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Exclusive Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/exclusive-activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "exclusive-activities"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exclusive Activity Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/exclusive-activities/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "exclusive-activities", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exclusive Activity by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/exclusive-activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "exclusive-activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Exclusive Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Exclusive Activity\",\n  \"description\": \"Exclusive activity description\",\n  \"category\": \"Adventure\",\n  \"price\": 200,\n  \"location\": \"Location name\",\n  \"isExclusive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/exclusive-activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "exclusive-activities"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exclusive Activity",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Exclusive Activity\",\n  \"price\": 250\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/exclusive-activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "exclusive-activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exclusive Activity",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/exclusive-activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "exclusive-activities", "{{activityId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Upload Activities (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "csv",
+                  "type": "file",
+                  "src": [],
+                  "description": "CSV file with activities"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/activities/bulk-upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "activities", "bulk-upload"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audio Analysis",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audio-analysis/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audio-analysis", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Audio (Returns PDF)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": [],
+                  "description": "Audio file (webm, mp3, wav, etc.)"
+                },
+                {
+                  "key": "name",
+                  "value": "John Doe",
+                  "type": "text",
+                  "description": "User name (2-100 characters)"
+                },
+                {
+                  "key": "email",
+                  "value": "john.doe@example.com",
+                  "type": "text",
+                  "description": "Valid email address"
+                },
+                {
+                  "key": "phone",
+                  "value": "+1234567890",
+                  "type": "text",
+                  "description": "Phone number (10-15 characters)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audio-analysis/analyze-audio",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audio-analysis", "analyze-audio"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Audio (Returns JSON)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "audio",
+                  "type": "file",
+                  "src": [],
+                  "description": "Audio file (webm, mp3, wav, etc.)"
+                },
+                {
+                  "key": "name",
+                  "value": "John Doe",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "john.doe@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "+1234567890",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audio-analysis/analyze-audio-json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audio-analysis", "analyze-audio-json"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Text (No Audio)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1234567890\",\n  \"transcription\": \"I love traveling and exploring new places. I'm interested in adventure activities and cultural experiences.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/audio-analysis/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audio-analysis", "analyze"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audio-analysis/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "audio-analysis", "test"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Waitlisters",
+      "item": [
+        {
+          "name": "Add to Waitlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"waitlister@example.com\",\n  \"name\": \"John Waitlister\",\n  \"phone\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/waitlisters",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "waitlisters"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Waitlisters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/waitlisters",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "waitlisters"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Waitlist Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/waitlisters/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "waitlisters", "count"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
