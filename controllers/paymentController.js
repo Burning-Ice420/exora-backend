@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const config = require('../config/environment');
 const Activity = require('../models/Activity');
 const ActivityPass = require('../models/ActivityPass');
+const PendingActivityRegistration = require('../models/PendingActivityRegistration');
 const { sendActivityPassEmail } = require('../services/emailService');
 const { ValidationError, NotFoundError } = require('../middleware/errorHandler');
 
@@ -70,7 +71,8 @@ const verifyPayment = async (req, res) => {
       activityId,
       attendeeName,
       attendeeEmail,
-      attendeePhone 
+      attendeePhone,
+      attendeeCollege 
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -106,13 +108,43 @@ const verifyPayment = async (req, res) => {
     const order = await razorpay.orders.fetch(razorpay_order_id);
     const amount = order.amount / 100; // Convert from paise to rupees
 
+    // If attendee data is missing, try to retrieve from pending registration
+    let finalAttendeeName = attendeeName;
+    let finalAttendeeEmail = attendeeEmail;
+    let finalAttendeePhone = attendeePhone || '';
+    let finalAttendeeCollege = attendeeCollege || '';
+
+    if (!finalAttendeeName || !finalAttendeeEmail || !finalAttendeeCollege) {
+      const pendingRegistration = await PendingActivityRegistration.findOne({
+        activityId,
+        attendeeEmail: finalAttendeeEmail,
+        status: 'pending',
+      }).sort({ createdAt: -1 });
+
+      if (pendingRegistration) {
+        finalAttendeeName = finalAttendeeName || pendingRegistration.attendeeName;
+        finalAttendeeEmail = finalAttendeeEmail || pendingRegistration.attendeeEmail;
+        finalAttendeePhone = finalAttendeePhone || pendingRegistration.attendeePhone || '';
+        finalAttendeeCollege = finalAttendeeCollege || pendingRegistration.attendeeCollege || '';
+        
+        // Mark pending registration as completed
+        pendingRegistration.status = 'completed';
+        await pendingRegistration.save();
+      }
+    }
+
+    if (!finalAttendeeName || !finalAttendeeEmail) {
+      throw new ValidationError('Attendee name and email are required');
+    }
+
     // Create activity pass
     const pass = new ActivityPass({
       activityId: activity._id,
       activityName: activity.name,
-      attendeeName,
-      attendeeEmail,
-      attendeePhone: attendeePhone || '',
+      attendeeName: finalAttendeeName,
+      attendeeEmail: finalAttendeeEmail,
+      attendeePhone: finalAttendeePhone,
+      attendeeCollege: finalAttendeeCollege,
       paymentId: razorpay_payment_id,
       orderId: razorpay_order_id,
       amount,
@@ -126,8 +158,8 @@ const verifyPayment = async (req, res) => {
 
     // Send confirmation email with pass
     const emailData = {
-      attendeeName,
-      attendeeEmail,
+      attendeeName: finalAttendeeName,
+      attendeeEmail: finalAttendeeEmail,
       passId: pass.passId,
       activityName: activity.name,
       date: activity.date.toLocaleDateString('en-IN', { 

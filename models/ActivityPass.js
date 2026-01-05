@@ -28,6 +28,10 @@ const activityPassSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  attendeeCollege: {
+    type: String,
+    default: '',
+  },
   paymentId: {
     type: String,
     required: true,

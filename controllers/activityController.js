@@ -1,4 +1,5 @@
 const Activity = require('../models/Activity');
+const PendingActivityRegistration = require('../models/PendingActivityRegistration');
 const { NotFoundError, ValidationError } = require('../middleware/errorHandler');
 
 // Get all activities (public)
@@ -63,9 +64,59 @@ const getActivity = async (req, res) => {
   }
 };
 
+// Save attendee information before payment (public)
+const saveAttendee = async (req, res) => {
+  try {
+    const { activityId, attendeeName, attendeeEmail, attendeePhone, attendeeCollege } = req.body;
+
+    if (!activityId || !attendeeName || !attendeeEmail || !attendeeCollege) {
+      throw new ValidationError('Activity ID, name, email, and college are required');
+    }
+
+    // Verify activity exists
+    const activity = await Activity.findById(activityId);
+    if (!activity) {
+      throw new NotFoundError('Activity not found');
+    }
+
+    // Check if there's already a pending registration for this email and activity
+    const existing = await PendingActivityRegistration.findOne({
+      activityId,
+      attendeeEmail,
+      status: 'pending',
+    });
+
+    if (existing) {
+      // Update existing registration
+      existing.attendeeName = attendeeName;
+      existing.attendeePhone = attendeePhone || '';
+      existing.attendeeCollege = attendeeCollege;
+      await existing.save();
+    } else {
+      // Create new pending registration
+      const registration = new PendingActivityRegistration({
+        activityId,
+        attendeeName,
+        attendeeEmail,
+        attendeePhone: attendeePhone || '',
+        attendeeCollege,
+      });
+      await registration.save();
+    }
+
+    res.json({
+      status: 'success',
+      message: 'Attendee information saved',
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   getActivities,
   getActivity,
+  saveAttendee,
 };
 
 
