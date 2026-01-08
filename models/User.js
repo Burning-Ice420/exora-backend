@@ -8,6 +8,12 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true
+  },
   passwordHash: {
     type: String,
     required: true
@@ -137,7 +143,7 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // Phone verification (if added later)
+  // Phone verification
   phoneVerified: {
     type: Boolean,
     default: false

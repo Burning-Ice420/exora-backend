@@ -2,17 +2,65 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
+const fast2smsService = require('../services/fast2smsService');
 const { ValidationError, ConflictError, AuthenticationError, NotFoundError } = require('../middleware/errorHandler');
 const config = require('../config/environment');
 
-// Signup user
-const signup = async (req, res) => {
+// Send OTP for phone verification
+const sendOTP = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new ValidationError(errors.array().map(err => err.msg).join(', '));
+  }
+
+  const { phone } = req.body;
+
+  // Check if phone number is already registered
+  const existingUser = await User.findOne({ phone });
+  if (existingUser) {
+    throw new ConflictError('Phone number already registered');
+  }
+
+  // Generate OTP
+  const otp = fast2smsService.generateOTP();
+
+  // Delete any existing OTPs for this phone number
+  await OTP.deleteMany({ phone });
+
+  // Save OTP to database
+  const otpRecord = new OTP({
+    phone,
+    otp,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+  });
+  await otpRecord.save();
+
+  // Send OTP via Fast2SMS
+  try {
+    await fast2smsService.sendOTP(phone, otp);
+    
+    res.json({
+      status: 'success',
+      message: 'OTP sent successfully to your phone number'
+    });
+  } catch (error) {
+    // Delete OTP record if sending failed
+    await OTP.deleteOne({ phone });
+    throw new ValidationError(`Failed to send OTP: ${error.message}`);
+  }
+};
+
+// Verify OTP and create user profile
+const verifyOTPAndSignup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new ValidationError(errors.array().map(err => err.msg).join(', '));
   }
 
   const { 
+    phone,
+    otp,
     email, 
     password, 
     name, 
@@ -28,16 +76,46 @@ const signup = async (req, res) => {
     ...rest 
   } = req.body;
 
-  const existing = await User.findOne({ email });
-  if (existing) {
+  // Verify OTP
+  const otpRecord = await OTP.findOne({ 
+    phone, 
+    verified: false 
+  }).sort({ createdAt: -1 });
+
+  if (!otpRecord) {
+    throw new ValidationError('OTP not found. Please request a new OTP.');
+  }
+
+  if (otpRecord.expiresAt < new Date()) {
+    throw new ValidationError('OTP has expired. Please request a new OTP.');
+  }
+
+  if (otpRecord.otp !== otp) {
+    throw new ValidationError('Invalid OTP. Please try again.');
+  }
+
+  // Check if email or phone is already registered
+  const existingEmail = await User.findOne({ email });
+  if (existingEmail) {
     throw new ConflictError('Email already registered');
   }
 
+  const existingPhone = await User.findOne({ phone });
+  if (existingPhone) {
+    throw new ConflictError('Phone number already registered');
+  }
+
+  // Mark OTP as verified
+  otpRecord.verified = true;
+  await otpRecord.save();
+
+  // Hash password
   const passwordHash = await bcrypt.hash(password, config.BCRYPT_ROUNDS);
   
   // Prepare user data with all new fields
   const userData = { 
     email, 
+    phone,
     passwordHash, 
     name, 
     age,
@@ -48,6 +126,7 @@ const signup = async (req, res) => {
     interests: interests || [],
     photos: photos || [],
     travel_type: travel_type || 'solo_traveler',
+    phoneVerified: true, // Mark phone as verified
     ...rest 
   };
 
@@ -64,6 +143,11 @@ const signup = async (req, res) => {
   const user = new User(userData);
   await user.save();
 
+  // Mark Stage 1 as completed (basic info)
+  user.profileStagesCompleted.stage1 = true;
+  user.profileCompletion = user.calculateProfileCompletion();
+  await user.save();
+
   const token = jwt.sign({ 
     userId: user._id, 
     travel_type: user.travel_type 
@@ -75,6 +159,7 @@ const signup = async (req, res) => {
     user: {
       _id: user._id,
       email: user.email,
+      phone: user.phone,
       name: user.name,
       age: user.age,
       location: user.location,
@@ -85,9 +170,15 @@ const signup = async (req, res) => {
       photos: user.photos,
       travel_type: user.travel_type,
       family_members: user.family_members,
+      phoneVerified: user.phoneVerified,
       createdAt: user.createdAt
     }
   });
+};
+
+// Legacy signup (kept for backward compatibility, but will require phone verification)
+const signup = async (req, res) => {
+  throw new ValidationError('Please use the OTP verification flow. Send OTP first, then verify and signup.');
 };
 
 // Login user
@@ -211,7 +302,9 @@ const updateUser = async (req, res) => {
 };
 
 module.exports = {
-  signup,
+  sendOTP,
+  verifyOTPAndSignup,
+  signup, // Legacy, kept for backward compatibility
   login,
   getCurrentUser,
   getUserById,
