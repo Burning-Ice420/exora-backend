@@ -65,7 +65,27 @@ const tripSchema = new mongoose.Schema({
     experienceName: String,
     price: Number,
     duration: String,
-    category: String
+    category: String,
+    // Location data with coordinates
+    location: mongoose.Schema.Types.Mixed, // Can be string or object
+    coordinates: {
+      type: [Number], // [latitude, longitude]
+      validate: {
+        validator: function(v) {
+          return !v || (Array.isArray(v) && v.length === 2 && 
+            typeof v[0] === 'number' && typeof v[1] === 'number' &&
+            v[0] >= -90 && v[0] <= 90 && // latitude range
+            v[1] >= -180 && v[1] <= 180); // longitude range
+        },
+        message: 'coordinates must be an array of [latitude, longitude] with valid ranges'
+      }
+    },
+    latitude: Number,
+    longitude: Number,
+    place: mongoose.Schema.Types.Mixed, // Google Places API response
+    // Image data from Google Places or other sources
+    image: String, // Main image URL
+    images: [String] // Array of image URLs
   }],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -39,7 +39,7 @@ class Fast2SMSService {
       const fetch = (await import('node-fetch')).default;
 
       // Create the OTP message
-      const message = `Your Exora verification code is ${otp}. Do not share this code with anyone. Valid for 10 minutes.`;
+      const message = `Your exora verification code is ${otp}. Do not share this code with anyone. Valid for 10 minutes.`;
 
       // Fast2SMS bulkV2 API uses GET request with query parameters
       // For route 'q' (quick): send full message directly
