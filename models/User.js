@@ -148,6 +148,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Saved posts
+  savedPosts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ContentFeed'
+  }],
   createdAt: {
     type: Date,
     default: Date.now

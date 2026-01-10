@@ -19,10 +19,15 @@ const getFeedPosts = catchAsync(async (req, res) => {
     .sort({ timestamp: -1 })
     .limit(50);
 
-  // Add isLiked status for each post
+  // Get user's saved posts
+  const user = await User.findById(userId).select('savedPosts');
+  const savedPostIds = user?.savedPosts?.map(id => id.toString()) || [];
+
+  // Add isLiked and saved status for each post
   const postsWithLikeStatus = posts.map(post => {
     const postObj = post.toObject();
     postObj.isLiked = post.likes.includes(userId);
+    postObj.saved = savedPostIds.includes(post._id.toString());
     
     // Debug: Log comment structure
     if (post.comments && post.comments.length > 0) {
@@ -195,11 +200,103 @@ const toggleSave = catchAsync(async (req, res) => {
   const { postId } = req.params;
   const userId = req.user.id;
 
-  // This would typically be stored in a separate SavedPosts model
-  // For now, we'll just return success
+  // Verify post exists
+  const post = await ContentFeed.findById(postId);
+  if (!post) {
+    return res.status(404).json({
+      success: false,
+      message: 'Post not found'
+    });
+  }
+
+  // Get user and check if post is already saved
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // Initialize savedPosts if it doesn't exist
+  if (!user.savedPosts) {
+    user.savedPosts = [];
+  }
+
+  const postIndex = user.savedPosts.findIndex(
+    savedId => savedId.toString() === postId
+  );
+
+  let isSaved;
+  if (postIndex > -1) {
+    // Unsave: remove from savedPosts
+    user.savedPosts.splice(postIndex, 1);
+    isSaved = false;
+  } else {
+    // Save: add to savedPosts
+    user.savedPosts.push(postId);
+    isSaved = true;
+  }
+
+  await user.save();
+
   res.status(200).json({
     success: true,
-    message: 'Post save status toggled'
+    message: isSaved ? 'Post saved' : 'Post unsaved',
+    data: {
+      isSaved,
+      savedCount: user.savedPosts.length
+    }
+  });
+});
+
+// Get saved posts for the current user
+const getSavedPosts = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+
+  // Get user with saved posts
+  const user = await User.findById(userId).select('savedPosts');
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // If no saved posts, return empty array
+  if (!user.savedPosts || user.savedPosts.length === 0) {
+    return res.status(200).json({
+      success: true,
+      data: []
+    });
+  }
+
+  // Get all saved posts
+  const posts = await ContentFeed.find({
+    _id: { $in: user.savedPosts }
+  })
+    .populate({
+      path: 'userId',
+      select: 'name profileImage'
+    })
+    .populate({
+      path: 'comments.userId',
+      select: 'name profileImage'
+    })
+    .sort({ timestamp: -1 });
+
+  // Add isLiked and saved status for each post
+  const postsWithStatus = posts.map(post => {
+    const postObj = post.toObject();
+    postObj.isLiked = post.likes.includes(userId);
+    postObj.saved = true; // All posts in this list are saved
+    
+    return postObj;
+  });
+
+  res.status(200).json({
+    success: true,
+    data: postsWithStatus
   });
 });
 
@@ -234,6 +331,7 @@ const deletePost = catchAsync(async (req, res) => {
 
 module.exports = {
   getFeedPosts,
+  getSavedPosts,
   createFeedPost,
   toggleLike,
   addComment,

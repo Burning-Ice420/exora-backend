@@ -8,6 +8,9 @@ const feedController = require('../controllers/feedController');
 // Get all feed posts
 router.get('/', verifyToken, catchAsync(feedController.getFeedPosts));
 
+// Get saved posts
+router.get('/saved', verifyToken, catchAsync(feedController.getSavedPosts));
+
 // Create a new feed post
 router.post('/', verifyToken, [
   body('text').optional().isLength({ min: 1, max: 500 }).withMessage('Text must be between 1 and 500 characters'),
